@@ -6,11 +6,6 @@ inputs:
   tools-path: 
     description: 'Path a csv file defining the tools and versions to install'
     required: true
-outputs:
-  tools_table:
-    description: "Markdown table corresponding to csv tools information"
-    value: ${{ steps.tools_table.outputs.table  }}
-
   
 runs:
   using: "composite"
@@ -41,22 +36,8 @@ runs:
         cat(jsonlite::toJSON(toolsData, dataframe = "rows"))
         ' > tools.json
         
-    - id: install-tools
-      if: false
-      name: Read and export tools and models as json
-      run: |
-        cp ${{ inputs.tools-path }} ${{ github.action_path }}/r-scripts/tools.csv
-        Rscript ${{ github.action_path }}/r-scripts/install_tools.R > tools.json
-      shell: bash
-
     - id: tools_data
       name: Output tools data for table conversion      
       run: |
         echo "json=$(cat tools.json)" >> $GITHUB_OUTPUT
       shell: bash
-
-      - id: tools_table
-        name: Markdown table for tools
-        uses: buildingcash/json-to-markdown-table-action@v1 
-        with: 
-          json: "${{ steps.tools_data.outputs.json }}"
