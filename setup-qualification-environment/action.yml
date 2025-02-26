@@ -19,6 +19,7 @@ runs:
       name: Install chromehtml2pdf for pdf conversion
       run: |
         npm install -g chromehtml2pdf
+      shell: bash
     
     - id: install-pandoc
       name: Install Pandoc for html conversion
@@ -41,7 +42,7 @@ runs:
     - id: tools_data
       name: Output tools data for table conversion      
       run: |
-        echo "json=$(cat tools.json)" >> $GITHUB_OUTPUT
+        echo "json=$(cat ${{ github.action_path }}/r-scripts/tools.json)" >> $GITHUB_OUTPUT
       shell: bash
 
       - id: tools_table
