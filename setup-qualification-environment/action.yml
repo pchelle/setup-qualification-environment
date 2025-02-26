@@ -27,13 +27,9 @@ runs:
         Rscript -e 'install.packages("jsonlite", repos="https://cloud.r-project.org/")'
         Rscript -e 'list.files()'
         Rscript -e 'read.csv("${{ inputs.tools-path }}", stringsAsFactors = FALSE, colClasses = "character")'
-        cp ${{ inputs.tools-path }} ${{ github.action_path }}/r-scripts/tools.csv
+        cp ${{ inputs.tools-path }} tools.csv
         Rscript ${{ github.action_path }}/r-scripts/install_tools.R
-        
-        Rscript -e '
-        toolsData <- read.csv("${{ inputs.tools-path }}", stringsAsFactors = FALSE, colClasses = "character")
-        cat(jsonlite::toJSON(toolsData, dataframe = "rows"))
-        ' > tools.json
+        Rscript -e 'cat(jsonlite::toJSON(read.csv("tools.csv", stringsAsFactors = FALSE, colClasses = "character"), dataframe = "rows"), file = "tools.json")'
       shell: bash
         
     - id: tools_data
