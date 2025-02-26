@@ -14,17 +14,17 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - id: check current dir
+    - id: check-current-dir
       name: Check
       run: ls
       shell: bash
 
-    - id: check setup dir
+    - id: check-setup-dir
       name: Check action path
       run: ls ${{ github.action_path }}
       shell: bash
 
-    - id: check setup dir
+    - id: check-runner-dir
       name: Check action path
       run: ls ${{ runner.temp }}
       shell: bash
