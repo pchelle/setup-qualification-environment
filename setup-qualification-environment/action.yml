@@ -6,14 +6,40 @@ inputs:
   tools-path: 
     description: 'Path a csv file defining the tools and versions to install'
     required: true
+  install-pandoc: 
+    description: 'Install Pandoc in the environment'
+    required: true
+    default: true
+  install-pdf-converter: 
+    description: 'Install chromehtml2pdf PDF converter in the environment'
+    required: true
+    default: true
 outputs:
+  pk-sim-version: 
+    description: "PK Sim Version"
+    value: ${{ steps.tools-versions.outputs.pk-sim  }}
+  qualification-framework-version: 
+    description: "Qualification framework version"
+    value: ${{ steps.tools-versions.outputs.qualification-framework  }}
   tools-table:
     description: "Markdown table corresponding to csv tools information"
-    value: ${{ steps.tools-data.outputs.json  }}
+    value: ${{ steps.tools-table.outputs.table  }}
   
 runs:
   using: "composite"
   steps:
+    - id: install-chromehtml2pdf
+      if: ${{ inputs.install-pdf-converter }}
+      name: Install chromehtml2pdf for pdf conversion
+      run: |
+        npm install -g chromehtml2pdf
+      shell: bash
+    
+    - id: install-pandoc
+      if: ${{ inputs.install-pandoc }}
+      name: Install Pandoc for html and word conversion
+      uses: r-lib/actions/setup-pandoc@v2
+      
     - id: install-r
       name: Setup R
       uses: r-lib/actions/setup-r@v2
@@ -31,29 +57,127 @@ runs:
     - id: install-cran-packages
       name: Install cran packages
       run: |
-        install.packages(c('dplyr','purrr','readr','tidyr','webshot','spelling','readxl','data.table','tidyselect','openxlsx'), repos = 'http://cran.us.r-project.org', type='win.binary')
-        install.packages(c('gridtext','ggtext','showtext','rsvg','svglite','cowplot','testthat','covr','rmarkdown','pkgdown'), repos = 'http://cran.us.r-project.org', type='win.binary')
-        install.packages(c("remotes", "pak"))
+        # Packages required to remotely install OSPSuite packages
+        install.packages(c("remotes", "pak"), repos = 'http://cran.us.r-project.org', type='win.binary')
+        print("CRAN Packages suggested and required by ospsuite-r")
+        install.packages(c('R6','rlang','dplyr','purrr','readr','tidyr','spelling','data.table','tidyselect','openxlsx','xml2'), repos = 'http://cran.us.r-project.org', type='win.binary')
+        print("CRAN Packages suggested and required by tlf")
+        install.packages(c('stringr','gridtext','ggtext','showtext','rsvg','svglite','cowplot'), repos = 'http://cran.us.r-project.org', type='win.binary')
+        print("CRAN Packages suggested and required by reporting engine")
+        install.packages(c('jsonlite','rmarkdown','knitr','parallel','readxl','Rmpi'), repos = 'http://cran.us.r-project.org', type='win.binary')
+        # Following packages should not be needed c('webshot','testthat','covr','pkgdown')
       shell: Rscript {0}
     
     - id: install-ospsuite-tools
       name: Install OSPSuite tools
       run: |
-        # toolsData <- read.csv("tools.csv", stringsAsFactors = FALSE, colClasses = "character")
-        pak::pak("Open-Systems-Pharmacology/OSPSuite.RUtils")
-        pak::pak("Open-Systems-Pharmacology/rSharp")
-        pak::pak("Open-Systems-Pharmacology/TLF-Library")
-        pak::pak("Open-Systems-Pharmacology/OSPSuite-R")
-        pak::pak("Open-Systems-Pharmacology/OSPSuite.ReportingEngine")
-        # PK-Sim and Qualification Runner
-        download.file('https://github.com/Open-Systems-Pharmacology/QualificationRunner/releases/download/v11.1/qualificationrunner-portable-setup_11.1.130.zip', destfile = 'qualificationrunner.zip')
-        unzip('qualificationrunner.zip', exdir = "QualificationRunner")
-        unlink('qualificationrunner.zip')
-        file.rename(from = list.files("QualificationRunner", full.names = TRUE), to = "QualificationRunner/QualificationRunner")
-        download.file('https://github.com/Open-Systems-Pharmacology/PK-Sim/releases/download/v11.3.208/pk-sim-portable-setup.zip', destfile = 'pk-sim.zip')
-        unzip('pk-sim.zip', exdir = "PK-Sim")
-        unlink('pk-sim.zip')
-        file.rename(from = list.files("PK-Sim", full.names = TRUE), to = "PK-Sim/PK-Sim")
+        # Get the tools data and versions
+        toolsData <- read.csv("${{ inputs.tools-path }}", stringsAsFactors = FALSE, colClasses = "character")
+        toolsData <- sapply(
+          toolsData$Tool, 
+          function(toolName){
+            list(
+              version = toolsData$Version[toolsData$Tool %in% toolName], 
+              url = toolsData$URL[toolsData$Tool %in% toolName]
+            )
+          }, 
+          USE.NAMES = TRUE,
+          simplify = FALSE
+          )
+        
+        # RUtils
+        if(is.na(toolsData$RUtils$url)){
+          pak::pak(paste0("Open-Systems-Pharmacology/OSPSuite.RUtils@v", toolsData$RUtils$version))
+        }else{
+          download.file(toolsData$RUtils$url, destfile = "ospsuite.utils.zip", mode = "wb")
+          unzip("ospsuite.utils.zip")
+          unlink("ospsuite.utils.zip")
+          archivePath <- list.files(pattern = "ospsuite.*\\.zip")
+          install.packages(archivePath, repos = NULL, type = "binary")
+          unlink(archivePath)
+        }
+        # rClr
+        if(is.na(toolsData$rClr$url)){
+        rClrURL <- paste0(
+          "https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v",
+          toolsData$rClr$version, "/rClr_", toolsData$rClr$version, ".zip"
+        )
+        download.file(rClrURL, destfile = "rClr.zip", mode = "wb")
+        install.packages("rClr.zip", repos = NULL, type = "binary")
+        unlink("rClr.zip")
+        }else{
+          download.file(toolsData$rClr$url, destfile = "rClr.zip", mode = "wb")
+          install.packages("rClr.zip", repos = NULL, type = "binary")
+          unzip("rClr.zip")
+        }
+        # rSharp
+        if(is.na(toolsData$rSharp$url)){
+          pak::pak(paste0("Open-Systems-Pharmacology/rSharp@v", toolsData$rSharp$version))
+        }else{
+          download.file(toolsData$rSharp$url, destfile = "rSharp.zip", mode = "wb")
+          unzip("rSharp.zip")
+          unlink("rSharp.zip")
+          archivePath <- list.files(pattern = "rSharp.*\\.zip")
+          install.packages(archivePath, repos = NULL, type = "binary")
+          unlink(archivePath)
+        }
+        # TLF
+        if(is.na(toolsData$TLF$url)){
+          pak::pak(paste0("Open-Systems-Pharmacology/TLF-Library@v", toolsData$TLF$version))
+        }else{
+          download.file(toolsData$TLF$url, destfile = "tlf.zip", mode = "wb")
+          install.packages("tlf.zip", repos = NULL, type = "binary")
+          unlink("tlf.zip")
+        }
+        # OSPSuite
+        if(is.na(toolsData$`ospsuite-R`$url)){
+          pak::pak(paste0("Open-Systems-Pharmacology/OSPSuite-R@v", toolsData$`ospsuite-R`$version))
+        }else{
+          download.file(toolsData$`ospsuite-R`$url, destfile = "ospsuite.zip", mode = "wb")
+          install.packages("ospsuite.zip", repos = NULL, type = "binary")
+          unlink("ospsuite.zip")
+        }
+        # Reporting Engine
+        if(is.na(toolsData$`Reporting Engine`$url)){
+          pak::pak(paste0("Open-Systems-Pharmacology/OSPSuite.ReportingEngine@v", toolsData$`Reporting Engine`$version))
+        }else{
+          download.file(toolsData$`Reporting Engine`$url, destfile = "ospsuite.reportingengine.zip", mode = "wb")
+          install.packages("ospsuite.reportingengine.zip", repos = NULL, type = "binary")
+          unlink("ospsuite.reportingengine.zip")
+        }
+        # PK-Sim 
+        if(is.na(toolsData$`PK-Sim`$url)){
+        pkSimURL <- paste0(
+          "https://github.com/Open-Systems-Pharmacology/PK-Sim/releases/download/v",
+          toolsData$`PK-Sim`$version, "/pk-sim-portable-setup.zip"
+          )
+        download.file(pkSimURL, destfile = "pk-sim-portable-setup.zip", mode = "wb")
+        }else{
+          download.file(toolsData$`PK-Sim`$url, destfile = "pk-sim-portable-setup.zip", mode = "wb")
+        }
+        unzip("pk-sim-portable-setup.zip", exdir = "PK-Sim")
+        unlink("pk-sim-portable-setup.zip")
+        file.rename(
+          from = list.files("PK-Sim", full.names = TRUE),
+          to = file.path("PK-Sim", "PK-Sim")
+          )
+        # Qualification Runner
+        if(is.na(toolsData$`Qualification Runner`$url)){
+        qualiRunnerURL <- paste0(
+          "https://github.com/Open-Systems-Pharmacology/QualificationRunner/releases/download/v",
+          toolsData$`Qualification Runner`$version, "/qualificationrunner-portable-setup", 
+          switch(toolsData$`Qualification Runner`$version, "10.0.59" = "", "11.0" = "_11.0.138", "11.1" = "_11.1.130"), ".zip"
+          )
+        download.file(qualiRunnerURL, destfile = "qualificationrunner.zip", mode = "wb")
+        }else{
+          download.file(toolsData$`Qualification Runner`$url, destfile = "qualificationrunner.zip", mode = "wb")
+        }
+        unzip("qualificationrunner.zip", exdir = "QualificationRunner")
+        unlink("qualificationrunner.zip")
+        file.rename(
+          from = list.files("QualificationRunner", full.names = TRUE),
+          to = file.path("QualificationRunner", "QualificationRunner")
+          )
       shell: Rscript {0}
 
     - id: save-tools-json
@@ -62,9 +186,22 @@ runs:
         cat(jsonlite::toJSON(read.csv("${{ inputs.tools-path }}", stringsAsFactors = FALSE, colClasses = "character"), dataframe = "rows"), file = "tools.json")
       shell: Rscript {0}
 
+    - id: tools-versions
+      name: Output tools data for table conversion
+      run: |
+        echo "pk-sim=$(cat tools.json)" >> $GITHUB_OUTPUT
+        echo "qualification-framework=$(cat tools.json)" >> $GITHUB_OUTPUT
+      shell: bash
+    
     - id: tools-data
-      name: Output tools data for table conversion      
+      name: Output tools data for table conversion
       run: |
         echo "json=$(cat tools.json)" >> $GITHUB_OUTPUT
       shell: bash
+
+    - id: tools-table
+      name: Markdown table for tools
+      uses: buildingcash/json-to-markdown-table-action@v1 
+      with: 
+        json: "${{ steps.tools-data.outputs.json }}"
    
