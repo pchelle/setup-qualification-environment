@@ -5,7 +5,7 @@ author: 'pchelle'
 inputs:
   tools-path: 
     description: 'Path a csv file defining the tools and versions to install'
-    default: './tools.csv'
+    required: true
   
 runs:
   using: "composite"
@@ -31,6 +31,7 @@ runs:
       name: Read and export tools,csv
       run: |
         Rscript -e 'install.packages("jsonlite", repos="https://cloud.r-project.org/")'
+        Rscript -e 'list.files()'
         Rscript -e '
         toolsData <- read.csv("${{ inputs.tools-path }}", stringsAsFactors = FALSE, colClasses = "character")
         cat(jsonlite::toJSON(toolsData, dataframe = "rows"))
