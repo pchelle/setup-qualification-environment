@@ -3,7 +3,7 @@ name: Test Qualification Environment Setup
 on:
   workflow_dispatch:
 
-permissions: read-all
+permissions: write-all
 
 jobs:
   print-tools-table:
