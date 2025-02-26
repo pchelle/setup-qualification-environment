@@ -7,10 +7,11 @@ jobs:
   print-tools-table:
     runs-on: windows-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - id: qualification-environment
-      name: Setup Qualification Environment
-      uses: pchelle/osp-actions/setup-qualification-environment@main
-      with:
-        tools-path: './tools.csv'   
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - id: qualification-environment
+        name: Setup Qualification Environment
+        uses: pchelle/osp-actions/setup-qualification-environment@main
+        with:
+          tools-path: ./tools.csv
