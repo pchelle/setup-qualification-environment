@@ -1,4 +1,4 @@
-name: Test of pchelle/setup-qualification-environment Github Action
+name: Test Qualification Environment Setup
 
 on:
   workflow_dispatch:
