@@ -32,7 +32,17 @@ runs:
         r-version: '4.3.1'
         use-public-rspm: true
     
+    - id: read-tools
+      name: Read and export tools,csv
+      run: |
+        Rscript -e 'install.packages("jsonlite", repos="https://cloud.r-project.org/")'
+        Rscript -e '
+        toolsData <- read.csv("${{ inputs.tools-path }}", stringsAsFactors = FALSE, colClasses = "character")
+        cat(jsonlite::toJSON(toolsData, dataframe = "rows"))
+        ' > tools.json
+        
     - id: install-tools
+      if: false
       name: Read and export tools and models as json
       run: |
         cp ${{ inputs.tools-path }} ${{ github.action_path }}/r-scripts/tools.csv
@@ -42,7 +52,7 @@ runs:
     - id: tools_data
       name: Output tools data for table conversion      
       run: |
-        echo "json=$(cat ${{ github.action_path }}/r-scripts/tools.json)" >> $GITHUB_OUTPUT
+        echo "json=$(cat tools.json)" >> $GITHUB_OUTPUT
       shell: bash
 
       - id: tools_table
