@@ -11,7 +11,7 @@ jobs:
       uses: actions/checkout@v4
     - id: qualification-environment
       name: Setup Qualification Environment
-      uses: pchelle/osp-actions/actions/setup-qualification-environment@main
+      uses: pchelle/setup-qualification-environment@main
       with:
         tools-path: './tools.csv'
     - name: Print the markdown table of the installed tools
