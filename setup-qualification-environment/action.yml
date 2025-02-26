@@ -9,54 +9,62 @@ inputs:
 outputs:
   tools-table:
     description: "Markdown table corresponding to csv tools information"
-    value: ${{ steps.tools_data.outputs.json  }}
+    value: ${{ steps.tools-data.outputs.json  }}
   
 runs:
   using: "composite"
   steps:
-    - id: check-current-dir
-      name: Check
-      run: ls
-      shell: bash
-
-    - id: check-setup-dir
-      name: Check action path
-      run: ls ${{ github.action_path }}
-      shell: bash
-
-    - id: check-runner-dir
-      name: Check action path
-      run: ls ${{ runner.temp }}
-      shell: bash
-    
     - id: install-r
       name: Setup R
       uses: r-lib/actions/setup-r@v2
       with:
         r-version: '4.3.1'
         use-public-rspm: true
+        
+    - id: check-tools
+      name: Check tools input
+      run: |
+        toolsData <- read.csv("${{ inputs.tools-path }}", stringsAsFactors = FALSE, colClasses = "character")
+        print(toolsData)
+      shell: Rscript {0}
     
-    - id: copy-tools
-      name: Copy tools.csv
+    - id: install-cran-packages
+      name: Install cran packages
       run: |
-        cp -n ${{ inputs.tools-path }} tools.csv
-      shell: bash
-      
-    - id: read-tools
-      name: Read and export tools.csv
+        install.packages(c('dplyr','purrr','readr','tidyr','webshot','spelling','readxl','data.table','tidyselect','openxlsx'), repos = 'http://cran.us.r-project.org', type='win.binary')
+        install.packages(c('gridtext','ggtext','showtext','rsvg','svglite','cowplot','testthat','covr','rmarkdown','pkgdown'), repos = 'http://cran.us.r-project.org', type='win.binary')
+        install.packages(c("remotes", "pak"))
+      shell: Rscript {0}
+    
+    - id: install-ospsuite-tools
+      name: Install OSPSuite tools
       run: |
-        Rscript r-scripts/install_tools.R
-      shell: bash
+        # toolsData <- read.csv("tools.csv", stringsAsFactors = FALSE, colClasses = "character")
+        pak::pak("Open-Systems-Pharmacology/OSPSuite.RUtils")
+        pak::pak("Open-Systems-Pharmacology/rSharp")
+        pak::pak("Open-Systems-Pharmacology/TLF-Library")
+        pak::pak("Open-Systems-Pharmacology/OSPSuite-R")
+        pak::pak("Open-Systems-Pharmacology/OSPSuite.ReportingEngine")
+        # PK-Sim and Qualification Runner
+        download.file('https://github.com/Open-Systems-Pharmacology/QualificationRunner/releases/download/v11.1/qualificationrunner-portable-setup_11.1.130.zip', destfile = 'qualificationrunner.zip')
+        unzip('qualificationrunner.zip', exdir = "QualificationRunner")
+        unlink('qualificationrunner.zip')
+        file.rename(from = list.files("QualificationRunner", full.names = TRUE), to = "QualificationRunner/QualificationRunner")
+        download.file('https://github.com/Open-Systems-Pharmacology/PK-Sim/releases/download/v11.3.208/pk-sim-portable-setup.zip', destfile = 'pk-sim.zip')
+        unzip('pk-sim.zip', exdir = "PK-Sim")
+        unlink('pk-sim.zip')
+        file.rename(from = list.files("PK-Sim", full.names = TRUE), to = "PK-Sim/PK-Sim")
+      shell: Rscript {0}
 
     - id: save-tools-json
       name: Save tools.json
       run: |
-        Rscript -e 'install.packages("jsonlite", repos="https://cloud.r-project.org/")'
-        Rscript -e 'cat(jsonlite::toJSON(read.csv("tools.csv", stringsAsFactors = FALSE, colClasses = "character"), dataframe = "rows"), file = "tools.json")'
-      shell: bash
+        cat(jsonlite::toJSON(read.csv("${{ inputs.tools-path }}", stringsAsFactors = FALSE, colClasses = "character"), dataframe = "rows"), file = "tools.json")
+      shell: Rscript {0}
 
-    - id: tools_data
+    - id: tools-data
       name: Output tools data for table conversion      
       run: |
         echo "json=$(cat tools.json)" >> $GITHUB_OUTPUT
       shell: bash
+   
