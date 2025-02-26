@@ -13,9 +13,4 @@ jobs:
       name: Setup Qualification Environment
       uses: pchelle/osp-actions/setup-qualification-environment@main
       with:
-        tools-path: './tools.csv'
-    - name: Print the markdown table of the installed tools
-      run: |
-        echo "${{ steps.qualification-environment.outputs.tools_table }}"
-      shell: bash
-    
+        tools-path: './tools.csv'   
