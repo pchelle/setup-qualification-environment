@@ -1,0 +1,75 @@
+name: 'Run Evaluation Report'
+description: 'Run and report the evaluation or qualification of PBPK model. '
+author: 'pchelle'
+
+inputs:
+  model-repo: 
+    description: 'Name of Github OSP repository from which to get the Model'
+    required: true
+  model-version:
+    description: 'Tag version of the model OSP repository'
+    required: true
+    default: '1.0'
+  snapshot:
+    description: 'Name of the snapshot (.json) file'
+    required: true
+    default: ${{ inputs.model-repo }}
+  workflow-script:
+    description: 'Path of workflow R script that creates the function to run the qualification if not default'
+    required: false
+  additional-project-urls:
+    description: 'URL of additional project snapshots to export as pksim5 projects'
+    required: false
+  pk-sim-version: 
+    description: 'Path a csv file defining the tools and versions to install'
+    required: false
+    default: '11.3.208'
+  qualification-framework-version:
+    description: 'Version of the Qualification Framework'
+    required: false
+    default: '3.2'
+  save-model-file:
+    description: 'Save pksim5 model file'
+    required: true
+    default: true
+  save-pdf:
+    description: 'Save evalution report as pdf'
+    required: true
+    default: true
+  save-artifact: 
+    description: 'Save the report as artifact'
+    required: true
+    default: true
+outputs:
+  artifact-id:
+    description: "Identifier of uploaded artifact"
+    value: ${{ steps.tools_data.outputs.json  }}
+  
+runs:
+  using: "composite"
+  steps:
+    - id: run-evaluation
+      name: Run evaluations
+      run: |
+        source("r-scripts/report-qualification-template.R")
+        runEvaluationReport(
+          modelName = ${{ inputs.model-repo }}, 
+          modelVersion = ${{ inputs.model-version }}, 
+          snaphotName = ${{ inputs.snapshot }}, 
+          workflowScript = ${{ inputs.workflow-script }}, 
+          additionalProjectURLs = ${{ inputs.additional-project-urls }}, 
+          pkSimVersion = ${{ inputs.pk-sim-version }}, 
+          qualificationFrameworkVersion = ${{ inputs.qualification-framework-version }},
+          saveModelFile = ${{ inputs.save-model-file }},
+          pdfReport = ${{ inputs.save-pdf }}
+          )
+      shell: Rscript {0}
+
+    - id: upload-report
+      if: ${{ inputs.save-artifact }}
+      name: Upload the report articat
+      uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.snapshot }}-${{ model-version }}
+          path: ${{ inputs.snapshot }}
+      
