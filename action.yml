@@ -36,6 +36,7 @@ runs:
       run: |
         cp ${{ inputs.tools-path }} ${{ github.action_path }}/r-scripts/tools.csv
         Rscript ${{ github.action_path }}/r-scripts/install_tools.R > tools.json
+      shell: bash
 
     - id: tools_data
       name: Output tools data for table conversion      
