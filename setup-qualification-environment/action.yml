@@ -21,17 +21,25 @@ runs:
         r-version: '4.3.1'
         use-public-rspm: true
     
+    - id: copy-tools
+      name: Copy tools.csv
+      run: |
+        cp -n ${{ inputs.tools-path }} tools.csv
+      shell: bash
+      
     - id: read-tools
       name: Read and export tools.csv
       run: |
+        Rscript r-scripts/install_tools.R
+      shell: bash
+
+    - id: save-tools-json
+      name: Save tools.json
+      run: |
         Rscript -e 'install.packages("jsonlite", repos="https://cloud.r-project.org/")'
-        Rscript -e 'list.files()'
-        Rscript -e 'read.csv("${{ inputs.tools-path }}", stringsAsFactors = FALSE, colClasses = "character")'
-        cp -n ${{ inputs.tools-path }} tools.csv
-        Rscript ${{ github.action_path }}/r-scripts/install_tools.R
         Rscript -e 'cat(jsonlite::toJSON(read.csv("tools.csv", stringsAsFactors = FALSE, colClasses = "character"), dataframe = "rows"), file = "tools.json")'
       shell: bash
-        
+
     - id: tools_data
       name: Output tools data for table conversion      
       run: |
