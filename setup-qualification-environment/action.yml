@@ -6,20 +6,14 @@ inputs:
   tools-path: 
     description: 'Path a csv file defining the tools and versions to install'
     required: true
+outputs:
+  tools-table:
+    description: "Markdown table corresponding to csv tools information"
+    value: ${{ steps.tools_data.outputs.json  }}
   
 runs:
   using: "composite"
   steps:
-    - id: install-chromehtml2pdf
-      name: Install chromehtml2pdf for pdf conversion
-      run: |
-        npm install -g chromehtml2pdf
-      shell: bash
-    
-    - id: install-pandoc
-      name: Install Pandoc for html conversion
-      uses: r-lib/actions/setup-pandoc@v2
-    
     - id: install-r
       name: Setup R
       uses: r-lib/actions/setup-r@v2
@@ -28,10 +22,14 @@ runs:
         use-public-rspm: true
     
     - id: read-tools
-      name: Read and export tools,csv
+      name: Read and export tools.csv
       run: |
         Rscript -e 'install.packages("jsonlite", repos="https://cloud.r-project.org/")'
         Rscript -e 'list.files()'
+        Rscript -e 'read.csv("${{ inputs.tools-path }}", stringsAsFactors = FALSE, colClasses = "character")'
+        cp ${{ inputs.tools-path }} ${{ github.action_path }}/r-scripts/tools.csv
+        Rscript ${{ github.action_path }}/r-scripts/install_tools.R
+        
         Rscript -e '
         toolsData <- read.csv("${{ inputs.tools-path }}", stringsAsFactors = FALSE, colClasses = "character")
         cat(jsonlite::toJSON(toolsData, dataframe = "rows"))
