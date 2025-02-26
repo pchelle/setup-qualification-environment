@@ -1,0 +1,51 @@
+name: 'Setup Qualification Environment'
+description: 'Install OSPSuite tools and Qualification Framework based on csv file input'
+author: 'pchelle'
+
+inputs:
+  tools-path: 
+    description: 'Path a csv file defining the tools and versions to install'
+    required: true
+outputs:
+  tools_table:
+    description: "Markdown table corresponding to csv tools information"
+    value: ${{ steps.tools_table.outputs.table  }}
+
+  
+runs:
+  using: "composite"
+  steps:
+    - id: install-chromehtml2pdf
+      name: Install chromehtml2pdf for pdf conversion
+      run: |
+        npm install -g chromehtml2pdf
+    
+    - id: install-pandoc
+      name: Install Pandoc for html conversion
+      uses: r-lib/actions/setup-pandoc@v2
+    
+    - id: install-r
+      name: Setup R
+      uses: r-lib/actions/setup-r@v2
+      with:
+        r-version: '4.3.1'
+        use-public-rspm: true
+    
+    - id: install-tools
+      name: Read and export tools and models as json
+      run: |
+        cp ${{ inputs.tools-path }} ${{ github.action_path }}/r-scripts/tools.csv
+        Rscript ${{ github.action_path }}/r-scripts/install_tools.R > tools.json
+      shell: bash
+
+    - id: tools_data
+      name: Output tools data for table conversion      
+      run: |
+        echo "json=$(cat tools.json)" >> $GITHUB_OUTPUT
+      shell: bash
+
+      - id: tools_table
+        name: Markdown table for tools
+        uses: buildingcash/json-to-markdown-table-action@v1 
+        with: 
+          json: "${{ steps.tools_data.outputs.json }}"
