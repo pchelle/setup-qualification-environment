@@ -3,6 +3,8 @@ name: Test Qualification Environment Setup
 on:
   workflow_dispatch:
 
+permissions: read-all
+
 jobs:
   print-tools-table:
     runs-on: windows-latest
