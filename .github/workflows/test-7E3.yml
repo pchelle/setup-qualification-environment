@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  print-tools-table:
+  test-report:
     runs-on: windows-latest
     steps:
       - name: Checkout repository
