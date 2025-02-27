@@ -17,3 +17,21 @@ jobs:
         uses: pchelle/osp-actions/setup-qualification-environment@main
         with:
           tools-path: tools.csv
+
+      - id: print-output
+        # Leverage installed environment
+        name: Print output from previous step
+        run: |
+          print(ospsuite.reportingengine::getReportingEngineInfo())
+          print("Qualification Framework Version")
+          print("${{ steps.qualification-environment.outputs.qualification-framework-version }}")
+          print("PK-Sim Version")
+          print("${{ steps.qualification-environment.outputs.pk-sim-version }}")
+        shell: Rscript {0}
+
+      - id: print-table
+        name: Print output table from previous step
+        run: |
+          echo ${{ steps.tools-versions.outputs.tools-table  }}
+        shell: bash
+        
