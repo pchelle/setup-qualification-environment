@@ -48,31 +48,145 @@ outputs:
   artifact-url:
     description: "URL of uploaded artifact"
     value: ${{ steps.upload-report.outputs.artifact-url  }}
-  
+
 runs:
   using: "composite"
   steps:
-    - id: run-evaluation
-      name: Run evaluations
+    - id: setup-repo
+      name: Setup Working Directory for Evaluation
       run: |
-        source("r-scripts/report-qualification-template.R")
-        runEvaluationReport(
-          repoName = "${{ inputs.model-repo }}", 
-          modelVersion = "${{ inputs.model-version }}", 
-          snaphotName = "${{ inputs.snapshot }}", 
-          workflowScript = "${{ inputs.workflow-script }}", 
-          additionalProjectURLs = "${{ inputs.additional-project-urls }}", 
-          pkSimVersion = "${{ inputs.pk-sim-version }}", 
-          qualificationFrameworkVersion = "${{ inputs.qualification-framework-version }}",
-          saveModelFile = ${{ inputs.save-model-file }},
-          pdfReport = ${{ inputs.save-pdf }},
-          wordReport = ${{ inputs.save-word }}
-          )
+        qualificationProject <- "${{ inputs.model-repo }}"
+        modelName <- "${{ inputs.snapshot }}"
+        snapshotFile <- paste0(modelName, ".json")
+        # Clean up workingDirectory because of potential rebase
+        workingDirectory <- normalizePath(modelName, mustWork = FALSE, winslash = "/")
+        unlink(workingDirectory, recursive = TRUE)
+        # Load repository content and clean up downloads
+        download.file(
+          paste0(
+            "https://github.com/Open-Systems-Pharmacology/", qualificationProject, 
+            "/archive/refs/tags/v${{ inputs.model-version }}.zip"
+          ),
+          destfile = "archive.zip"
+        )
+        unzip("archive.zip", exdir = "archive")
+        unlink("archive.zip")
+        file.copy(
+          list.files("archive", pattern = qualificationProject, full.names = TRUE), 
+          getwd(), 
+          recursive = TRUE
+        )
+        file.rename(from = list.files(pattern = qualificationProject), to = modelName)
+        unlink("archive", recursive = TRUE)
       shell: Rscript {0}
+    
+    - id: run-evaluation
+      name: Run evaluation
+      run: |
+        qualificationRunnerFolder <- normalizePath("QualificationRunner/QualificationRunner", winslash = "/")
+        pkSimPortableFolder <- normalizePath("PK-Sim/PK-Sim", winslash = "/")
+        workingDirectory <- normalizePath("${{ inputs.snapshot }}", winslash = "/")
+        versionInfo <- QualificationVersionInfo$new(
+          "${{ inputs.model-version }}",
+          paste(head(unlist(strsplit("${{ inputs.pk-sim-version }}", "\\.")), 2), collapse = "."), 
+          "${{ inputs.qualification-framework-version }}"
+        )
+        # Load library and clear simulation cache in case
+        library(ospsuite.reportingengine)
+        ospsuite::clearMemory(clearSimulationsCache = TRUE)
+        # Fetch createQualificationReport() function from qualificationPath
+        setwd(workingDirectory)
+        workflowScript <- "${{ inputs$workflow-script }}"
+        qualificationPath <- ifelse(
+          any(is.null(workflowScript), is.na(workflowScript), workflowScript %in% ""),
+          # If note specified, use default evaluation/workflow.R
+          list.files(recursive = TRUE, pattern = "workflow.R", full.names = TRUE, ignore.case = TRUE),
+          workflowScript
+          )
+        source(qualificationPath)
+        # Needs to be run from same directory as workflow.R
+        setwd(dirname(qualificationPath))
+        createQualificationReport(
+          qualificationRunnerFolder = qualificationRunnerFolder,
+          pkSimPortableFolder = pkSimPortableFolder,
+          createWordReport = ${{ inputs.save-word }},
+          versionInfo = versionInfo
+          )
+        # Clean up and keep only the final report
+        setwd(workingDirectory)
+        reportPaths <- list.files(pattern = "report.md", recursive = TRUE, full.names = TRUE, ignore.case = TRUE)
+        ospsuite.reportingengine::copyReport(
+          from = tail(reportPaths, 1), 
+          to = "${{ inputs.snapshot }}_evaluation_report.md", 
+          copyWordReport = ${{ inputs.save-word }}
+        )
+        unlink(dirname(qualificationPath), recursive = TRUE)
+      shell: Rscript {0}
+
+    - id: convert-to-pdf
+      if: ${{ inputs.save-pdf }}
+      name: Convert to pdf
+      run: |
+        workingDirectory <- normalizePath("${{ inputs.snapshot }}", winslash = "/")
+        reportPath <- file.path(workingDirectory, "${{ inputs.snapshot }}_evaluation_report.md")
+        # Convert to html using css
+        knitr::pandoc(reportPath, paste("html", "--embed-resources", "--standalone", "-c \"osp.css\""))
+        cmdLine <- paste(
+          'chromehtml2pdf',
+          paste0('--out="', gsub(pattern = ".md", ".pdf", reportPath), '"'),
+          "--displayHeaderFooter true",
+          "--format A4", "--marginTop 10mm", "--marginBottom 10mm", "--marginLeft 10mm", "--marginRight 10mm",
+          # Header and footer templates are not well converted, leaving default footer so far 
+          '--headerTemplate "<span></span>"',
+          #'--footerTemplate "<span>Page <span class=\"pageNumber\"></span> / <span class=\"totalPages\"></span></span>"',
+          paste0('"', gsub(pattern = ".md", ".html", reportPath), '"')
+        )
+        system(cmdLine)
+      shell: Rscript {0}
+
+    - id: save-model-files
+      if: ${{ inputs.save-model-file }}
+      name: Convert to pksim5 model files
+      run: |
+        workingDirectory <- normalizePath("${{ inputs.snapshot }}", winslash = "/")
+        cmdLine <- paste(
+          pkSimPath,
+          "snap",
+          # Snapshot file <modelName>.json is in working directory
+          "-i", workingDirectory,
+          "-o", workingDirectory,
+          "-p"
+        )
+        system(cmdLine)
+        # For next step, remove potential json from working directory
+        unlink(file.path(workingDirectory, "${{ inputs.snapshot }}.json"))
+        additionalSnapshots <- ospsuite::toPathArray("additional-project-urls")
+        for(additionalSnapshot in additionalSnapshots){
+          download.file(
+            # Use Github raw.githubusercontent.com to download snapshot file
+            file.path("https://raw.githubusercontent.com/Open-Systems-Pharmacology", additionalSnapshot), 
+            # Keep only the last name of the path (eg <model name>_Pediatrics.json)
+            destfile = file.path(workingDirectory, basename(additionalSnapshot))
+          )
+          system(cmdLine)
+          unlink(file.path(workingDirectory, basename(additionalSnapshot)))
+        }
+      shell: Rscript {0}
+
+    - id: upload-failed-run
+      name: Upload artifact if failed
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: failed-${{ inputs.snapshot }}
+        path: |
+          ${{ inputs.snapshot }}/**
+          **.txt
+          **.md
 
     - id: upload-report
       if: ${{ inputs.save-artifact }}
-      name: Upload the report articat
+      name: Upload the report artifact
       uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.snapshot }}-${{ model-version }}
