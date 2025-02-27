@@ -6,7 +6,7 @@ Run and report the evaluation or qualification of PBPK model.
 
 ```yml
 - name: Run evaluation
-  run: pchelle/report-evaluation@main
+  uses: pchelle/osp-actions/report-evaluation@main
   with:
     model-repo: 7E3-Model
     model-version: 1.0
