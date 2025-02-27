@@ -20,6 +20,7 @@ jobs:
         name: Print output from previous step
         run: |
           library(ospsuite.reportingengine)
+          ospsuite::clearMemory(clearSimulationsCache = TRUE)
           # Check available font families
           print(sysfonts::font_families())
           # Check where fonts are supposed to be saved and found
