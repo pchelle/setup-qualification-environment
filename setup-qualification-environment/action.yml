@@ -149,11 +149,11 @@ runs:
         }
         # PK-Sim 
         if(is.na(toolsData$`PK-Sim`$url)){
-        pkSimURL <- paste0(
-          "https://github.com/Open-Systems-Pharmacology/PK-Sim/releases/download/v",
-          toolsData$`PK-Sim`$version, "/pk-sim-portable-setup.zip"
-          )
-        download.file(pkSimURL, destfile = "pk-sim-portable-setup.zip", mode = "wb")
+          pkSimURL <- paste0(
+            "https://github.com/Open-Systems-Pharmacology/PK-Sim/releases/download/v",
+            toolsData$`PK-Sim`$version, "/pk-sim-portable-setup.zip"
+            )
+          download.file(pkSimURL, destfile = "pk-sim-portable-setup.zip", mode = "wb")
         }else{
           download.file(toolsData$`PK-Sim`$url, destfile = "pk-sim-portable-setup.zip", mode = "wb")
         }
@@ -180,6 +180,9 @@ runs:
           from = list.files("QualificationRunner", full.names = TRUE),
           to = file.path("QualificationRunner", "QualificationRunner")
           )
+        # Save PK sim and Qualifcation framework versions
+        cat(toolsData$`PK-Sim`$version, file = "pk-sim-version.txt")
+        cat(toolsData$`Qualification Framework`$version, file = "qualification-framework-version.txt")
       shell: Rscript {0}
 
     - id: save-tools-json
@@ -191,8 +194,10 @@ runs:
     - id: tools-versions
       name: Output tools data for table conversion
       run: |
-        echo "pk-sim=$(cat tools.json)" >> $GITHUB_OUTPUT
-        echo "qualification-framework=$(cat tools.json)" >> $GITHUB_OUTPUT
+        echo "pk-sim=$(cat pk-sim-version.txt)" >> $GITHUB_OUTPUT
+        echo "qualification-framework=$(cat qualification-framework-version.txt)" >> $GITHUB_OUTPUT
+        rm pk-sim-version.txt
+        rm qualification-framework-version.txt
       shell: bash
     
     - id: tools-data
