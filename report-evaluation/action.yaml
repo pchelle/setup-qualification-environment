@@ -13,7 +13,6 @@ inputs:
   snapshot:
     description: 'Name of the snapshot (.json) file'
     required: true
-    default: ${{ inputs.model-repo }}
   workflow-script:
     description: 'Path of workflow R script that creates the function to run the qualification if not default'
     required: false
@@ -96,7 +95,7 @@ runs:
         ospsuite::clearMemory(clearSimulationsCache = TRUE)
         # Fetch createQualificationReport() function from qualificationPath
         setwd(workingDirectory)
-        workflowScript <- "${{ inputs$workflow-script }}"
+        workflowScript <- "${{ inputs.workflow-script }}"
         qualificationPath <- ifelse(
           any(is.null(workflowScript), is.na(workflowScript), workflowScript %in% ""),
           # If note specified, use default evaluation/workflow.R
@@ -188,7 +187,7 @@ runs:
       if: ${{ inputs.save-artifact }}
       name: Upload the report artifact
       uses: actions/upload-artifact@v4
-        with:
-          name: ${{ inputs.snapshot }}-${{ model-version }}
-          path: ${{ inputs.snapshot }}
+      with:
+        name: ${{ inputs.snapshot }}-${{ model-version }}
+        path: ${{ inputs.snapshot }}
       
