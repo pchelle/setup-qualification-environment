@@ -108,7 +108,7 @@ runs:
         createQualificationReport(
           qualificationRunnerFolder = qualificationRunnerFolder,
           pkSimPortableFolder = pkSimPortableFolder,
-          createWordReport = ${{ inputs.save-word }},
+          createWordReport = as.logical("${{ inputs.save-word }}"),
           versionInfo = versionInfo
           )
         # Clean up and keep only the final report
@@ -117,7 +117,7 @@ runs:
         copyReport(
           from = tail(reportPaths, 1), 
           to = "${{ inputs.snapshot }}_evaluation_report.md", 
-          copyWordReport = ${{ inputs.save-word }}
+          copyWordReport = as.logical("${{ inputs.save-word }}")
         )
         unlink(dirname(qualificationPath), recursive = TRUE)
       shell: Rscript {0}
@@ -160,7 +160,7 @@ runs:
         system(cmdLine)
         # For next step, remove potential json from working directory
         unlink(file.path(workingDirectory, "${{ inputs.snapshot }}.json"))
-        additionalSnapshots <- ospsuite::toPathArray("additional-project-urls")
+        additionalSnapshots <- ospsuite::toPathArray("${{ inputs.additional-project-urls }}")
         for(additionalSnapshot in additionalSnapshots){
           download.file(
             # Use Github raw.githubusercontent.com to download snapshot file
