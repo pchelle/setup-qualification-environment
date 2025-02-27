@@ -30,19 +30,19 @@ inputs:
   save-model-file:
     description: 'Save pksim5 model file'
     required: true
-    default: true
+    default: TRUE
   save-pdf:
     description: 'Save evaluation report as PDF'
     required: true
-    default: true
+    default: TRUE
   save-word:
     description: 'Save evaluation report as word document'
     required: true
-    default: false
+    default: FALSE
   save-artifact: 
     description: 'Upload the report and exported files as artifact'
     required: true
-    default: true
+    default: TRUE
 outputs:
   artifact-url:
     description: "URL of uploaded artifact"
