@@ -188,6 +188,6 @@ runs:
       name: Upload the report artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.snapshot }}-${{ model-version }}
+        name: ${{ inputs.snapshot }}-${{ inputs.model-version }}
         path: ${{ inputs.snapshot }}
       
