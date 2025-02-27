@@ -1,4 +1,4 @@
-name: Test Qualification Environment Setup
+name: Test showtext package
 
 on:
   workflow_dispatch:
