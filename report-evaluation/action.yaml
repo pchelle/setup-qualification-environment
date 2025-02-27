@@ -114,7 +114,7 @@ runs:
         # Clean up and keep only the final report
         setwd(workingDirectory)
         reportPaths <- list.files(pattern = "report.md", recursive = TRUE, full.names = TRUE, ignore.case = TRUE)
-        ospsuite.reportingengine::copyReport(
+        copyReport(
           from = tail(reportPaths, 1), 
           to = "${{ inputs.snapshot }}_evaluation_report.md", 
           copyWordReport = ${{ inputs.save-word }}
@@ -148,6 +148,7 @@ runs:
       name: Convert to pksim5 model files
       run: |
         workingDirectory <- normalizePath("${{ inputs.snapshot }}", winslash = "/")
+        pkSimPath <- normalizePath("PK-Sim/PK-Sim/PKSim.CLI.exe", winslash = "/")
         cmdLine <- paste(
           pkSimPath,
           "snap",
