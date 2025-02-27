@@ -98,13 +98,15 @@ runs:
         }
         # rClr
         if(is.na(toolsData$rClr$url)){
-        rClrURL <- paste0(
-          "https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v",
-          toolsData$rClr$version, "/rClr_", toolsData$rClr$version, ".zip"
-        )
-        download.file(rClrURL, destfile = "rClr.zip", mode = "wb")
-        install.packages("rClr.zip", repos = NULL, type = "binary")
-        unlink("rClr.zip")
+          if(!is.na(toolsData$rClr$version)){
+          rClrURL <- paste0(
+            "https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v",
+            toolsData$rClr$version, "/rClr_", toolsData$rClr$version, ".zip"
+          )
+          download.file(rClrURL, destfile = "rClr.zip", mode = "wb")
+          install.packages("rClr.zip", repos = NULL, type = "binary")
+          unlink("rClr.zip")
+          }
         }else{
           download.file(toolsData$rClr$url, destfile = "rClr.zip", mode = "wb")
           install.packages("rClr.zip", repos = NULL, type = "binary")
