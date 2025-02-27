@@ -22,7 +22,7 @@ jobs:
         with:
           model-repo: 7E3-Model
           model-version: 1.0
-          snapshot: 7E3
+          snapshot: '7E3'
           pk-sim-version: ${{ steps.qualification-environment.outputs.pk-sim-version }}
           qualification-framework-version: ${{ steps.qualification-environment.outputs.qualification-framework-version }}
           save-model-file: false
