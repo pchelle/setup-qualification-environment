@@ -1,0 +1,29 @@
+name: Test Qualification Environment Setup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  print-showtext:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - id: qualification-environment
+        name: Setup Qualification Environment
+        uses: pchelle/osp-actions/setup-qualification-environment@main
+        with:
+          tools-path: tools.csv
+
+      - id: print-output
+        name: Print output from previous step
+        run: |
+          library(ospsuite.reportingengine)
+          # Check available font families
+          print(sysfonts::font_families())
+          # Check where fonts are supposed to be saved and found
+          print(sysfonts::font_paths())
+          # Check available font files
+          print(sysfonts::font_files())
+        shell: Rscript {0}
