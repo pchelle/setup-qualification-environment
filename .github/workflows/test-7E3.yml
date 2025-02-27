@@ -25,7 +25,7 @@ jobs:
           snapshot: '7E3'
           pk-sim-version: ${{ steps.qualification-environment.outputs.pk-sim-version }}
           qualification-framework-version: ${{ steps.qualification-environment.outputs.qualification-framework-version }}
-          save-model-file: false
-          save-pdf: false
-          save-artifact: true
+          save-model-file: FALSE
+          save-pdf: FALSE
+          save-artifact: TRUE
       
