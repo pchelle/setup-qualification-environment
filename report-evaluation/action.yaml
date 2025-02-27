@@ -9,7 +9,7 @@ inputs:
   model-version:
     description: 'Tag version of the model OSP repository'
     required: true
-    default: 1.0
+    default: '1.0'
   snapshot:
     description: 'Name of the snapshot (.json) file'
     required: true
