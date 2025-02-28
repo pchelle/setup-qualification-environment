@@ -140,13 +140,7 @@ runs:
           unlink("ospsuite.zip")
         }
         # Reporting Engine
-        if(is.na(toolsData$`Reporting Engine`$url)){
-          pak::pak(paste0("Open-Systems-Pharmacology/OSPSuite.ReportingEngine@v", toolsData$`Reporting Engine`$version))
-        }else{
-          download.file(toolsData$`Reporting Engine`$url, destfile = "ospsuite.reportingengine.zip", mode = "wb")
-          install.packages("ospsuite.reportingengine.zip", repos = NULL, type = "binary")
-          unlink("ospsuite.reportingengine.zip")
-        }
+        pak::pak("pchelle/OSPSuite.ReportingEngine@1293_showtext")
         # PK-Sim 
         if(is.na(toolsData$`PK-Sim`$url)){
           pkSimURL <- paste0(
