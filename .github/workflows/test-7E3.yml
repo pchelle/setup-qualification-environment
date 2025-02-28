@@ -12,13 +12,13 @@ jobs:
         
       - id: qualification-environment
         name: Setup Qualification Environment
-        uses: pchelle/osp-actions/setup-qualification-environment@main
+        uses: pchelle/osp-actions/setup-qualification-environment@showtext
         with:
           tools-path: tools.csv
 
       - id: evaluate-model
         name: Run evaluation
-        uses: pchelle/osp-actions/report-evaluation@main
+        uses: pchelle/osp-actions/report-evaluation@showtext
         with:
           model-repo: 7E3-Model
           model-version: '1.0'
