@@ -62,10 +62,11 @@ runs:
         print("CRAN Packages suggested and required by ospsuite-r")
         install.packages(c('R6','rlang','dplyr','purrr','readr','tidyr','spelling','data.table','tidyselect','openxlsx','xml2'), repos = 'http://cran.us.r-project.org', type='win.binary')
         print("CRAN Packages suggested and required by tlf")
-        install.packages(c('stringr','gridtext','ggtext','showtext','rsvg','svglite','cowplot'), repos = 'http://cran.us.r-project.org', type='win.binary')
+        install.packages(c('stringr','gridtext','ggtext','showtext','extrafont','rsvg','svglite','cowplot'), repos = 'http://cran.us.r-project.org', type='win.binary')
         print("CRAN Packages suggested and required by reporting engine")
         install.packages(c('jsonlite','rmarkdown','knitr','parallel','readxl','Rmpi'), repos = 'http://cran.us.r-project.org', type='win.binary')
         # Following packages should not be needed c('webshot','testthat','covr','pkgdown')
+        extrafont::font_import(prompt = FALSE)
       shell: Rscript {0}
     
     - id: install-ospsuite-tools
