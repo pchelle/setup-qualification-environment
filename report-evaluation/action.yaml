@@ -88,7 +88,6 @@ runs:
         # Load library and clear simulation cache in case
         library(ospsuite.reportingengine)
         ospsuite::clearMemory(clearSimulationsCache = TRUE)
-        extrafont::loadfonts("all")
         versionInfo <- QualificationVersionInfo$new(
           "${{ inputs.model-version }}",
           paste(head(unlist(strsplit("${{ inputs.pk-sim-version }}", "\\.")), 2), collapse = "."), 
