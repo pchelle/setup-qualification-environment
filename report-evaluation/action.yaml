@@ -129,7 +129,7 @@ runs:
         workingDirectory <- normalizePath("${{ inputs.snapshot }}", winslash = "/")
         reportPath <- file.path(workingDirectory, "${{ inputs.snapshot }}_evaluation_report.md")
         # Convert to html using css
-        knitr::pandoc(reportPath, paste("html", "--embed-resources", "--standalone", "-c \"osp.css\""))
+        knitr::pandoc(reportPath, paste("html", "--embed-resources", "--standalone", "-c \"github-markdown.css\""))
         cmdLine <- paste(
           'chromehtml2pdf',
           paste0('--out="', gsub(pattern = ".md", ".pdf", reportPath), '"'),
