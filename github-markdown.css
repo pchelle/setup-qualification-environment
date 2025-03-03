@@ -228,6 +228,12 @@
   border-style: none;
   max-width: 100%;
   box-sizing: content-box;
+  page-break-before: always;
+}
+
+img {
+    max-width: 100%;
+    page-break-before: always;
 }
 
 .markdown-body code,
