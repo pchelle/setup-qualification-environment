@@ -14,7 +14,7 @@ jobs:
         
       - id: qualification-environment
         name: Setup Qualification Environment
-        uses: pchelle/osp-actions/setup-qualification-environment@main
+        uses: pchelle/osp-actions/setup-qualification-environment@showtext
         with:
           tools-path: tools.csv
 
