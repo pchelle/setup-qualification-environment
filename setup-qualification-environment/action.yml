@@ -66,6 +66,11 @@ runs:
         print("CRAN Packages suggested and required by reporting engine")
         install.packages(c('jsonlite','rmarkdown','knitr','parallel','readxl','Rmpi'), repos = 'http://cran.us.r-project.org', type='win.binary')
         # Following packages should not be needed c('webshot','testthat','covr','pkgdown')
+        unitConversionFactor <- grDevices::dev.size("in") / grDevices::dev.size("px")
+        print("Conversion")
+        print(unitConversionFactor)
+        print("Standard Plot Size")
+        print(2*c(500, 400)*unitConversionFactor*300)
       shell: Rscript {0}
     
     - id: install-ospsuite-tools
