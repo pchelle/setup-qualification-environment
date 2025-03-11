@@ -87,12 +87,6 @@ runs:
         workingDirectory <- normalizePath("${{ inputs.snapshot }}", winslash = "/")
         # Load library and clear simulation cache in case
         library(ospsuite.reportingengine)
-        if(.Platform$OS.type == "windows"){
-          windowsFonts(
-            NotoSans = windowsFont("NotoSans"),
-            Symbola = windowsFont("Symbola")
-            )
-          }
         ospsuite::clearMemory(clearSimulationsCache = TRUE)
         versionInfo <- QualificationVersionInfo$new(
           "${{ inputs.model-version }}",
