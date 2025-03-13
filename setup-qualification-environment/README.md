@@ -25,7 +25,6 @@ This action requires:
 This action can optionally use:
 
 - __`install-pandoc`__: boolean defining to install Pandoc in the environment
-- __`install-pdf-converter`__: boolean to defining to install `chromehtml2pdf` PDF converter in the environment
 
 The csv file in __`tools-path`__ indicates software and software versions to be installed in environment before running the qualifications of the models.
 If a link is defined in the `URL` column, the installation will use the software from the link as is instead of searching from the version.
