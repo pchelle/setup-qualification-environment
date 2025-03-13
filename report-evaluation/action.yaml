@@ -130,17 +130,10 @@ runs:
         reportPath <- file.path(workingDirectory, "${{ inputs.snapshot }}_evaluation_report.md")
         # Convert to html using css
         knitr::pandoc(reportPath, paste("html", "--embed-resources", "--standalone", "-c \"osp.css\""))
-        cmdLine <- paste(
-          'chromehtml2pdf',
-          paste0('--out="', gsub(pattern = ".md", ".pdf", reportPath), '"'),
-          "--displayHeaderFooter true",
-          "--format A4", "--marginTop 10mm", "--marginBottom 10mm", "--marginLeft 10mm", "--marginRight 10mm",
-          # Header and footer templates are not well converted, leaving default footer so far 
-          '--headerTemplate "<span></span>"',
-          #'--footerTemplate "<span>Page <span class=\"pageNumber\"></span> / <span class=\"totalPages\"></span></span>"',
-          paste0('"', gsub(pattern = ".md", ".html", reportPath), '"')
+        webshot2::webshot(
+          url = gsub(pattern = ".md", ".html", reportPath),
+          file = gsub(pattern = ".md", ".pdf", reportPath)
         )
-        system(cmdLine)
       shell: Rscript {0}
 
     - id: save-model-files
