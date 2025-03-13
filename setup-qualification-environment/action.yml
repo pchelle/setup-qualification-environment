@@ -10,10 +10,6 @@ inputs:
     description: 'Install Pandoc in the environment'
     required: true
     default: true
-  install-pdf-converter: 
-    description: 'Install chromehtml2pdf PDF converter in the environment'
-    required: true
-    default: true
 outputs:
   pk-sim-version: 
     description: "PK Sim Version"
@@ -28,13 +24,6 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - id: install-chromehtml2pdf
-      if: ${{ inputs.install-pdf-converter }}
-      name: Install chromehtml2pdf for pdf conversion
-      run: |
-        npm install -g chromehtml2pdf
-      shell: bash
-    
     - id: install-pandoc
       if: ${{ inputs.install-pandoc }}
       name: Install Pandoc for html and word conversion
@@ -64,8 +53,8 @@ runs:
         print("CRAN Packages suggested and required by tlf")
         install.packages(c('stringr','gridtext','ggtext','showtext','rsvg','svglite','cowplot'), repos = 'http://cran.us.r-project.org', type='win.binary')
         print("CRAN Packages suggested and required by reporting engine")
-        install.packages(c('jsonlite','rmarkdown','knitr','parallel','readxl','Rmpi'), repos = 'http://cran.us.r-project.org', type='win.binary')
-        # Following packages should not be needed c('webshot','testthat','covr','pkgdown')
+        install.packages(c('jsonlite','rmarkdown','knitr','parallel','readxl','Rmpi','webshot2'), repos = 'http://cran.us.r-project.org', type='win.binary')
+        # Following packages should not be needed c('testthat','covr','pkgdown')
       shell: Rscript {0}
     
     - id: install-ospsuite-tools
